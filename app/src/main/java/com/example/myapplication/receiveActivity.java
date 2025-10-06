@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
@@ -35,7 +36,10 @@ public class receiveActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_receive);
 
-//        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            registerReceiver(onDownloadComplete, filter, RECEIVER_NOT_EXPORTED);
+        }
 
         scan_button = findViewById(R.id.scan_button);
         go_button = findViewById(R.id.go_button);
@@ -89,7 +93,7 @@ public class receiveActivity extends AppCompatActivity {
     }
 
     void start_download(){
-        String download_link = "10.0.2.2:8000/download";
+        String download_link = "http://10.0.2.2:8000/download";
         DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
 
         Uri uri = Uri.parse(download_link);
@@ -119,4 +123,9 @@ public class receiveActivity extends AppCompatActivity {
         }
     };
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(onDownloadComplete);
+    }
 }
