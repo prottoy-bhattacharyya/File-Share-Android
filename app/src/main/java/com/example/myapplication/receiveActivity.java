@@ -14,10 +14,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.ActivityCompat;
@@ -29,15 +31,24 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class receiveActivity extends AppCompatActivity {
 
     Button scan_button, go_button;
-    String qr_text;
     long downloadID;
     TextView title;
+    String download_link = "";
+    EditText type_text;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,13 +66,20 @@ public class receiveActivity extends AppCompatActivity {
         scan_button = findViewById(R.id.scan_button);
         go_button = findViewById(R.id.go_button);
         title = findViewById(R.id.title_text);
+        type_text = findViewById(R.id.type_text);
 
         scan_button.setOnClickListener(view -> qr_scanner());
 
         go_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                start_download();
+                download_link = type_text.getText().toString();
+                if (download_link.isEmpty()) {
+                    Toast.makeText(getApplicationContext(), "Please scan QR code or type link", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                start_download_process();
+                finish();
             }
         });
     }
@@ -80,8 +98,8 @@ public class receiveActivity extends AppCompatActivity {
                 .startScan()
                 .addOnSuccessListener(
                         barcode -> {
-                            qr_text = barcode.getRawValue();
-                            scan_button.setText(qr_text);
+                            download_link = barcode.getRawValue();
+                            type_text.setText(download_link);
                         })
                 .addOnCanceledListener(
                         () -> {
@@ -97,128 +115,66 @@ public class receiveActivity extends AppCompatActivity {
     }
 
 
-    String getFileName(){
-        String file_name="";
-//        import android.app.DownloadManager;
-//import android.content.Context;
-//import android.net.Uri;
-//import android.os.Environment;
-//import android.widget.Toast;
-//import androidx.appcompat.app.AppCompatActivity; // Assuming this is in an Activity or similar class
-//
-//import java.io.IOException;
-//import java.util.regex.Matcher;
-//import java.util.regex.Pattern;
-//
-//import okhttp3.Call;
-//import okhttp3.Callback;
-//import okhttp3.OkHttpClient;
-//import okhttp3.Request;
-//import okhttp3.Response;
-//
-//        public class DownloadActivity extends AppCompatActivity { // or your activity name
-//
-//            private long downloadID;
-//            private final String download_link = "http://10.0.2.2:8000/download/";
-//
-//            public void startDownload() {
-//                // Step 1: Make a HEAD request to get headers (Content-Disposition)
-//                getFilenameAndEnqueueDownload(download_link);
-//            }
-//
-//            private void getFilenameAndEnqueueDownload(String url) {
-//                OkHttpClient client = new OkHttpClient();
-//                Request request = new Request.Builder()
-//                        .url(url)
-//                        // Use HEAD method to get headers without downloading the file body
-//                        .head()
-//                        .build();
-//
-//                client.newCall(request).enqueue(new Callback() {
-//                    @Override
-//                    public void onFailure(Call call, IOException e) {
-//                        // Handle network failure or error
-//                        runOnUiThread(() -> {
-//                            Toast.makeText(getApplicationContext(), "Failed to get file info: " + e.getMessage(), Toast.LENGTH_LONG).show();
-//                        });
-//                    }
-//
-//                    @Override
-//                    public void onResponse(Call call, Response response) throws IOException {
-//                        if (!response.isSuccessful()) {
-//                            runOnUiThread(() -> {
-//                                Toast.makeText(getApplicationContext(), "Server error when getting file info: " + response.code(), Toast.LENGTH_LONG).show();
-//                            });
-//                            return;
-//                        }
-//
-//                        // Get the Content-Disposition header value
-//                        String contentDisposition = response.header("Content-Disposition");
-//                        String suggestedFilename = extractFilenameFromContentDisposition(contentDisposition);
-//
-//                        // Fallback if header is missing or parsing fails
-//                        if (suggestedFilename == null || suggestedFilename.isEmpty()) {
-//                            suggestedFilename = "downloaded_file_" + System.currentTimeMillis() + ".dat";
-//                        }
-//
-//                        // Step 2: Enqueue the DownloadManager request with the obtained filename
-//                        enqueueDownload(url, suggestedFilename);
-//                    }
-//                });
-//            }
-//
-//            // --- Utility Method to Parse Header ---
-//            private String extractFilenameFromContentDisposition(String header) {
-//                if (header == null) return null;
-//
-//                // This simple regex works for headers like: attachment; filename="pic.png"
-//                // And is more robust than simple string splitting.
-//                String filename = null;
-//                Pattern pattern = Pattern.compile("filename=\"?([^\"\\n;]+)\"?;?", Pattern.CASE_INSENSITIVE);
-//                Matcher matcher = pattern.matcher(header);
-//
-//                if (matcher.find()) {
-//                    // Group 1 is the content inside the quotes (or after filename=)
-//                    filename = matcher.group(1).replaceAll("^\"|\"$", "");
-//                }
-//                return filename;
-//            }
-//
-//            // --- Step 3: Enqueue the DownloadManager Request ---
-//            private void enqueueDownload(String url, String filename) {
-//                DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-//                if (downloadManager == null) {
-//                    runOnUiThread(() -> {
-//                        Toast.makeText(getApplicationContext(), "Error: Download Manager service not available.", Toast.LENGTH_LONG).show();
-//                    });
-//                    return;
-//                }
-//
-//                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-//
-//                request.setTitle(filename); // Use the extracted filename for the notification title
-//                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-//
-//                // Use the extracted filename here. This is the crucial change.
-//                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
-//
-//                request.setAllowedOverMetered(true);
-//                request.setAllowedOverRoaming(true);
-//
-//                downloadID = downloadManager.enqueue(request);
-//
-//                runOnUiThread(() -> {
-//                    Toast.makeText(getApplicationContext(), "Download started for: " + filename, Toast.LENGTH_SHORT).show();
-//                });
-//            }
-//        }
-
-        return file_name;
+    public void start_download_process() {
+        getFilenameAndEnqueueDownload(download_link);
     }
-    void start_download(){
-        String download_link = "http://10.0.2.2:8000/download/";
+
+    private void getFilenameAndEnqueueDownload(String url) {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .head()
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(getApplicationContext(), "Failed to get file info: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+
+                String contentDisposition = response.header("Content-Disposition");
+                String suggestedFilename = extractFilenameFromContentDisposition(contentDisposition);
+
+                if (suggestedFilename == null || suggestedFilename.isEmpty()) {
+                    suggestedFilename = "downloaded_file_" + System.currentTimeMillis() + ".dat";
+                    // Still show an error if the header was explicitly missing
+                    if (contentDisposition == null) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(getApplicationContext(), "Warning: Content-Disposition header not found. Using default filename.", Toast.LENGTH_LONG).show();
+                        });
+                    }
+                }
 
 
+                String finalFilename = suggestedFilename;
+                runOnUiThread(() -> {
+                    enqueueDownload(url, finalFilename);
+                });
+            }
+        });
+    }
+
+
+    private String extractFilenameFromContentDisposition(String header) {
+        if (header == null) return null;
+
+        String filename = null;
+        Pattern pattern = Pattern.compile("filename=\"?([^\"\\n;]+)\"?;?", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(header);
+
+        if (matcher.find()) {
+            filename = matcher.group(1).replaceAll("^\"|\"$", "");
+        }
+        return filename;
+    }
+
+
+    private void enqueueDownload(String url, String filename) {
         try {
             DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
             if (downloadManager == null) {
@@ -226,11 +182,14 @@ public class receiveActivity extends AppCompatActivity {
                 return;
             }
 
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(download_link));
+            Toast.makeText(getApplicationContext(), "File name: " + filename, Toast.LENGTH_LONG).show();
 
-            request.setTitle("Downloading File");
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+
+            request.setTitle(filename);
+            request.setDescription("Downloading file...");
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, null);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
             request.setAllowedOverMetered(true);
             request.setAllowedOverRoaming(true);
 
@@ -238,11 +197,9 @@ public class receiveActivity extends AppCompatActivity {
 
             Toast.makeText(getApplicationContext(), "Download started", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            android.util.Log.e("DownloadError", "Error in start_download", e);
+            android.util.Log.e("DownloadError", "Error in enqueueDownload", e);
             Toast.makeText(getApplicationContext(), "Failed to start download: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-
-        
     }
 
     private final BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
