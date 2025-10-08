@@ -61,4 +61,5 @@
         app:layout_constraintStart_toEndOf="@+id/type_text_layout"
         app:layout_constraintTop_toTopOf="@+id/type_text_layout" />
 
+
 </androidx.constraintlayout.widget.ConstraintLayout>
