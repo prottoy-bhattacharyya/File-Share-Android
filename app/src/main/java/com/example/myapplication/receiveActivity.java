@@ -45,9 +45,11 @@ public class receiveActivity extends AppCompatActivity {
 
     Button scan_button, go_button;
     long downloadID;
-    TextView title;
-    String download_link = "";
+    TextView title_text;
+    String download_link = "http://192.168.1.138:8000/download?unique_text=";
+    String file_count_link = "http://192.168.1.138:8000/file_count?unique_text=";
     EditText type_text;
+    int file_count = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +67,7 @@ public class receiveActivity extends AppCompatActivity {
 
         scan_button = findViewById(R.id.scan_button);
         go_button = findViewById(R.id.go_button);
-        title = findViewById(R.id.title_text);
+        title_text = findViewById(R.id.title_text);
         type_text = findViewById(R.id.type_text);
 
         scan_button.setOnClickListener(view -> qr_scanner());
@@ -98,8 +100,10 @@ public class receiveActivity extends AppCompatActivity {
                 .startScan()
                 .addOnSuccessListener(
                         barcode -> {
-                            download_link = barcode.getRawValue();
-                            type_text.setText(download_link);
+                            String unique_text = barcode.getRawValue();
+                            file_count_link += unique_text;
+                            download_link += unique_text;
+                            type_text.setText(unique_text);
                         })
                 .addOnCanceledListener(
                         () -> {
@@ -138,6 +142,7 @@ public class receiveActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
 
                 String contentDisposition = response.header("Content-Disposition");
+
                 String suggestedFilename = extractFilenameFromContentDisposition(contentDisposition);
 
                 if (suggestedFilename == null || suggestedFilename.isEmpty()) {
@@ -150,10 +155,10 @@ public class receiveActivity extends AppCompatActivity {
                     }
                 }
 
-
                 String finalFilename = suggestedFilename;
                 runOnUiThread(() -> {
                     enqueueDownload(url, finalFilename);
+                    title_text.setText(contentDisposition);
                 });
             }
         });
@@ -162,6 +167,7 @@ public class receiveActivity extends AppCompatActivity {
 
     private String extractFilenameFromContentDisposition(String header) {
         if (header == null) return null;
+
 
         String filename = null;
         Pattern pattern = Pattern.compile("filename=\"?([^\"\\n;]+)\"?;?", Pattern.CASE_INSENSITIVE);
@@ -200,6 +206,10 @@ public class receiveActivity extends AppCompatActivity {
             android.util.Log.e("DownloadError", "Error in enqueueDownload", e);
             Toast.makeText(getApplicationContext(), "Failed to start download: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    int getFileNumber(String url){
+
     }
 
     private final BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
