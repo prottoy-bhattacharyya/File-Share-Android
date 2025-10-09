@@ -30,6 +30,9 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -46,10 +49,14 @@ public class receiveActivity extends AppCompatActivity {
     Button scan_button, go_button;
     long downloadID;
     TextView title_text;
-    String download_link = "http://192.168.1.138:8000/download?unique_text=";
-    String file_count_link = "http://192.168.1.138:8000/file_count?unique_text=";
+    // Use final constants for the base links
+    final String DOWNLOAD_LINK_BASE = "http://192.168.1.138:8000/download?unique_text=";
+    final String FILE_COUNT_LINK_BASE = "http://192.168.1.138:8000/get_file_count?unique_text=";
+
     EditText type_text;
-    int file_count = 0;
+    String unique_text_value = ""; // Store the unique text globally
+    boolean isScanned = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,13 +82,14 @@ public class receiveActivity extends AppCompatActivity {
         go_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                download_link = type_text.getText().toString();
-                if (download_link.isEmpty()) {
-                    Toast.makeText(getApplicationContext(), "Please scan QR code or type link", Toast.LENGTH_SHORT).show();
+                // Get text from EditText for validation and to store globally
+                String text = type_text.getText().toString().trim();
+                if (text.isEmpty()) {
+                    Toast.makeText(getApplicationContext(), "Please scan QR code or type identifier", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                unique_text_value = text;
                 start_download_process();
-                finish();
             }
         });
     }
@@ -100,10 +108,10 @@ public class receiveActivity extends AppCompatActivity {
                 .startScan()
                 .addOnSuccessListener(
                         barcode -> {
-                            String unique_text = barcode.getRawValue();
-                            file_count_link += unique_text;
-                            download_link += unique_text;
-                            type_text.setText(unique_text);
+                            isScanned = true;
+                            unique_text_value = barcode.getRawValue(); // Store value globally
+                            type_text.setText(unique_text_value);
+                            start_download_process();
                         })
                 .addOnCanceledListener(
                         () -> {
@@ -118,9 +126,69 @@ public class receiveActivity extends AppCompatActivity {
                 );
     }
 
+   void start_download_process(){
+       if(unique_text_value.isEmpty()){
+           // Should not happen if logic in go_button is correct, but safe check
+           unique_text_value = type_text.getText().toString().trim();
+           if (unique_text_value.isEmpty()) {
+               Toast.makeText(getApplicationContext(), "Pleasse Scan QR code or type identifier", Toast.LENGTH_SHORT).show();
+               return;
+           }
+       }
 
-    public void start_download_process() {
-        getFilenameAndEnqueueDownload(download_link);
+       // --- CORRECTED: Build the URL locally using the base constant and the unique_text_value ---
+       String file_count_url = FILE_COUNT_LINK_BASE + unique_text_value;
+
+       OkHttpClient client = new OkHttpClient();
+       Request request = new Request.Builder()
+               .url(file_count_url) // Use the locally built URL
+               .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(getApplicationContext(), "Failed to get file count: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseBody = response.body().string();
+                int count = 0;
+                try {
+                    JSONObject jsonObject = new JSONObject(responseBody);
+                    count = jsonObject.getInt("file_count");
+                } catch (JSONException e) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(getApplicationContext(), "Failed to parse file count JSON.", Toast.LENGTH_LONG).show();
+                    });
+                    return;
+                }
+
+                final int finalCount = count;
+                runOnUiThread(()->{
+                    next_download_process(finalCount);
+                });
+            }
+        });
+
+    }
+
+
+    public void next_download_process(int file_count) {
+        if (file_count == 0) {
+            Toast.makeText(getApplicationContext(), "No files found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        for (int i = 0; i < file_count; i++) {
+            // Build the URL for the current file index
+            String current_download_url = DOWNLOAD_LINK_BASE + unique_text_value + "&file_index=" + i;
+
+            // Start the process for this file
+            getFilenameAndEnqueueDownload(current_download_url);
+
+        }
     }
 
     private void getFilenameAndEnqueueDownload(String url) {
@@ -158,7 +226,6 @@ public class receiveActivity extends AppCompatActivity {
                 String finalFilename = suggestedFilename;
                 runOnUiThread(() -> {
                     enqueueDownload(url, finalFilename);
-                    title_text.setText(contentDisposition);
                 });
             }
         });
@@ -208,9 +275,7 @@ public class receiveActivity extends AppCompatActivity {
         }
     }
 
-    int getFileNumber(String url){
 
-    }
 
     private final BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         @Override
