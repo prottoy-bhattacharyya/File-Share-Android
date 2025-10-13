@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.HashSet;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -47,15 +48,13 @@ import okhttp3.Response;
 public class receiveActivity extends AppCompatActivity {
 
     Button scan_button, go_button;
-    long downloadID;
+    private final HashSet<Long> downloadIDs = new HashSet<>();
     TextView title_text;
-    // Use final constants for the base links
     final String DOWNLOAD_LINK_BASE = "http://192.168.1.138:8000/download?unique_text=";
     final String FILE_COUNT_LINK_BASE = "http://192.168.1.138:8000/get_file_count?unique_text=";
 
     EditText type_text;
-    String unique_text_value = ""; // Store the unique text globally
-    boolean isScanned = false;
+    String unique_text_value = "";
 
 
     @Override
@@ -82,7 +81,6 @@ public class receiveActivity extends AppCompatActivity {
         go_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Get text from EditText for validation and to store globally
                 String text = type_text.getText().toString().trim();
                 if (text.isEmpty()) {
                     Toast.makeText(getApplicationContext(), "Please scan QR code or type identifier", Toast.LENGTH_SHORT).show();
@@ -108,7 +106,6 @@ public class receiveActivity extends AppCompatActivity {
                 .startScan()
                 .addOnSuccessListener(
                         barcode -> {
-                            isScanned = true;
                             unique_text_value = barcode.getRawValue(); // Store value globally
                             type_text.setText(unique_text_value);
                             start_download_process();
@@ -128,20 +125,20 @@ public class receiveActivity extends AppCompatActivity {
 
    void start_download_process(){
        if(unique_text_value.isEmpty()){
-           // Should not happen if logic in go_button is correct, but safe check
            unique_text_value = type_text.getText().toString().trim();
+
            if (unique_text_value.isEmpty()) {
                Toast.makeText(getApplicationContext(), "Pleasse Scan QR code or type identifier", Toast.LENGTH_SHORT).show();
                return;
            }
        }
 
-       // --- CORRECTED: Build the URL locally using the base constant and the unique_text_value ---
        String file_count_url = FILE_COUNT_LINK_BASE + unique_text_value;
+       //http://<address>/get_file_count?unique_text=<unique_text>
 
        OkHttpClient client = new OkHttpClient();
        Request request = new Request.Builder()
-               .url(file_count_url) // Use the locally built URL
+               .url(file_count_url)
                .build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -159,7 +156,9 @@ public class receiveActivity extends AppCompatActivity {
                 try {
                     JSONObject jsonObject = new JSONObject(responseBody);
                     count = jsonObject.getInt("file_count");
-                } catch (JSONException e) {
+                }
+
+                catch (JSONException e) {
                     runOnUiThread(() -> {
                         Toast.makeText(getApplicationContext(), "Failed to parse file count JSON.", Toast.LENGTH_LONG).show();
                     });
@@ -168,26 +167,24 @@ public class receiveActivity extends AppCompatActivity {
 
                 final int finalCount = count;
                 runOnUiThread(()->{
+                    Toast.makeText(getApplicationContext(), "Downloading " + finalCount + " files", Toast.LENGTH_SHORT).show();
                     next_download_process(finalCount);
                 });
             }
         });
-
     }
 
 
     public void next_download_process(int file_count) {
         if (file_count == 0) {
-            Toast.makeText(getApplicationContext(), "No files found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "No files found", Toast.LENGTH_LONG).show();
             return;
         }
         for (int i = 0; i < file_count; i++) {
-            // Build the URL for the current file index
             String current_download_url = DOWNLOAD_LINK_BASE + unique_text_value + "&file_index=" + i;
+            //http://<address>/download?unique_text=<unique_text>&file_index=<index>
 
-            // Start the process for this file
             getFilenameAndEnqueueDownload(current_download_url);
-
         }
     }
 
@@ -211,11 +208,11 @@ public class receiveActivity extends AppCompatActivity {
 
                 String contentDisposition = response.header("Content-Disposition");
 
-                String suggestedFilename = extractFilenameFromContentDisposition(contentDisposition);
+                String Filename = extractFilenameFromContentDisposition(contentDisposition);
 
-                if (suggestedFilename == null || suggestedFilename.isEmpty()) {
-                    suggestedFilename = "downloaded_file_" + System.currentTimeMillis() + ".dat";
-                    // Still show an error if the header was explicitly missing
+                if (Filename == null || Filename.isEmpty()) {
+                    Filename = "downloaded_file_" + System.currentTimeMillis() + ".dat";
+
                     if (contentDisposition == null) {
                         runOnUiThread(() -> {
                             Toast.makeText(getApplicationContext(), "Warning: Content-Disposition header not found. Using default filename.", Toast.LENGTH_LONG).show();
@@ -223,7 +220,7 @@ public class receiveActivity extends AppCompatActivity {
                     }
                 }
 
-                String finalFilename = suggestedFilename;
+                String finalFilename = Filename;
                 runOnUiThread(() -> {
                     enqueueDownload(url, finalFilename);
                 });
@@ -255,8 +252,6 @@ public class receiveActivity extends AppCompatActivity {
                 return;
             }
 
-            Toast.makeText(getApplicationContext(), "File name: " + filename, Toast.LENGTH_LONG).show();
-
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 
             request.setTitle(filename);
@@ -266,9 +261,8 @@ public class receiveActivity extends AppCompatActivity {
             request.setAllowedOverMetered(true);
             request.setAllowedOverRoaming(true);
 
-            downloadID = downloadManager.enqueue(request);
+            downloadIDs.add(downloadManager.enqueue(request));
 
-            Toast.makeText(getApplicationContext(), "Download started", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             android.util.Log.e("DownloadError", "Error in enqueueDownload", e);
             Toast.makeText(getApplicationContext(), "Failed to start download: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -276,46 +270,15 @@ public class receiveActivity extends AppCompatActivity {
     }
 
 
-
     private final BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-            if (id == downloadID) {
-//                DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-//                DownloadManager.Query query = new DownloadManager.Query();
-//                query.setFilterById(id);
-//                try (Cursor cursor = downloadManager.query(query)) {
-//                    if (cursor.moveToFirst()) {
-//                        int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
-//                        if (statusIndex != -1) {
-//                            int status = cursor.getInt(statusIndex);
-//                            if (status == DownloadManager.STATUS_SUCCESSFUL) {
-//                                Toast.makeText(getApplicationContext(), "Download Complete", Toast.LENGTH_SHORT).show();
-//                            } else {
-//                                int reasonIndex = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
-//                                int reason = -1;
-//                                if (reasonIndex != -1) {
-//                                    reason = cursor.getInt(reasonIndex);
-//                                }
-//                                Toast.makeText(getApplicationContext(), "Download failed. Reason: " + reason, Toast.LENGTH_LONG).show();
-//                            }
-//                        }
-//                    }
-//                }
-//                catch (Exception e){
-//                    e.printStackTrace();
-//                    Toast.makeText(getApplicationContext(), "Cursor error", Toast.LENGTH_SHORT).show();
-//                }
+            if (downloadIDs.contains(id)) {
+                downloadIDs.remove(id);
                 Toast.makeText(getApplicationContext(), "Download Complete", Toast.LENGTH_SHORT).show();
             }
         }
     };
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(onDownloadComplete);
-        Toast.makeText(getApplicationContext(), "Download canceled", Toast.LENGTH_SHORT).show();
-    }
 }

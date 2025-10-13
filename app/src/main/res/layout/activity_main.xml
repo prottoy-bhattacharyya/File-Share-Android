@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="#FFFFFF"
     android:padding="32dp"
     tools:context=".MainActivity">
 
@@ -14,33 +14,55 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="File Transfer"
-        android:textSize="34sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/send_btn"
+        android:textColor="#1A237E"
+        android:textSize="40sp"
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.2" />
+        app:layout_constraintVertical_bias="0.25"
+        app:layout_constraintBottom_toTopOf="@+id/send_btn"
+        android:layout_marginTop="64dp"
+        android:layout_marginBottom="96dp"
+        />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/send_btn"
         android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="16dp"
-        android:text="Send"
+        android:layout_height="64dp"
+        android:layout_marginBottom="24dp"
+        android:text="Send Files"
         android:textSize="18sp"
+        android:textAllCaps="false"
+        android:fontFamily="sans-serif-medium"
+        app:cornerRadius="12dp"
+        android:backgroundTint="#4CAF50"
+        app:icon="@drawable/send"
+        app:iconGravity="textStart"
+        app:iconPadding="16dp"
         app:layout_constraintBottom_toTopOf="@+id/receive_btn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/receive_btn"
         android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:text="Receive"
+        android:layout_height="64dp"
+        android:text="Receive Files"
         android:textSize="18sp"
+        android:textAllCaps="false"
+        android:fontFamily="sans-serif-medium"
+        app:cornerRadius="12dp"
+        app:strokeColor="#1A237E"
+        app:strokeWidth="2dp"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:textColor="#1A237E"
+        app:icon="@drawable/download"
+        app:iconGravity="textStart"
+        app:iconPadding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="64dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

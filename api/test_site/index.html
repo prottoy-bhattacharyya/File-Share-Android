@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <p id="result"></p>
+</body>
+
+<script>
+    const result = document.getElementById("result");
+    const apiURL = "http://192.168.1.138:8000/get_file_count/?unique_text=abcd";
+
+    fetch(apiURL)
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            result.innerText += `\nFile count: ${data.file_count}`;
+        })
+
+        .catch(error => {
+            console.error('Error:', error);
+            result.innerText = 'Error fetching file count';
+        });
+</script>
+
+</html>
