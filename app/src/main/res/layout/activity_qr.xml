@@ -4,58 +4,102 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    tools:context=".MainActivity">
+    android:background="#FFFFFF"
+    android:padding="32dp"
+    tools:context=".sendActivity"> <TextView
+    android:id="@+id/title_text"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:text="Share Connection Code"
+    android:textColor="#1A237E"
+    android:textSize="28sp"
+    android:fontFamily="sans-serif-medium"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    android:layout_marginTop="16dp"/>
 
-    <!-- 1. QR Code Display Area (Placeholder) -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/qrCodeCard"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
-        app:layout_constraintVertical_bias="0.35"
-        app:layout_constraintBottom_toTopOf="@+id/textButton"
+    <TextView
+        android:id="@+id/subtitle_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Receiver can scan this or type the code."
+        android:textColor="#616161"
+        android:textSize="16sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/title_text" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/qrCodeCard"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/subtitle_text">
 
         <ImageView
             android:id="@+id/qr_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
+            android:padding="16dp"
+            android:src="@drawable/logo_no_shadow_8k"
+            android:background="#FFFFFF"
             android:layout_gravity="center" />
-        <!-- In a real app, this TextView would be replaced by an ImageView to show the QR code -->
+
     </androidx.cardview.widget.CardView>
 
-
-    <!-- 2. Text Button (Wider, like a text field or action button) -->
-    <Button
-        android:id="@+id/textButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+    <TextView
+        android:id="@+id/qrCodeLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:text="Connection Code:"
+        android:textColor="#1A237E"
+        android:textSize="16sp"
+        android:fontFamily="sans-serif-medium"
         android:layout_marginTop="48dp"
-        android:layout_marginEnd="16dp"
-        android:paddingVertical="12dp"
-        android:text="Text"
-        app:layout_constraintEnd_toStartOf="@+id/shareButton"
-        app:layout_constraintHorizontal_weight="2"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/qrCodeCard" />
 
-
-    <!-- 3. Share Button (Smaller) -->
-    <Button
-        android:id="@+id/shareButton"
+    <TextView
+        android:id="@+id/qrText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingVertical="12dp"
-        android:text="Share"
-        app:layout_constraintBottom_toBottomOf="@+id/textButton"
+        android:text="ABCD-EFGH"
+        android:textColor="#212121"
+        android:textSize="24sp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:paddingVertical="8dp"
+        android:background="@drawable/rounded_text_background"
+        android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@+id/textButton"
-        app:layout_constraintTop_toTopOf="@+id/textButton" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/qrCodeLabel" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/shareButton"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="48dp"
+        android:text="Share Code"
+        android:textSize="18sp"
+        android:textAllCaps="false"
+        android:fontFamily="sans-serif-medium"
+        app:cornerRadius="12dp"
+        android:backgroundTint="#4CAF50"
+        app:icon="@drawable/share"
+        app:iconGravity="textStart"
+        app:iconPadding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

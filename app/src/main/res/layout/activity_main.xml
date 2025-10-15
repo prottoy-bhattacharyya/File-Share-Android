@@ -13,30 +13,51 @@
         android:id="@+id/title_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+
+        android:layout_marginTop="72dp"
+        android:fontFamily="sans-serif-medium"
         android:text="File Transfer"
         android:textColor="#1A237E"
         android:textSize="40sp"
-        android:fontFamily="sans-serif-medium"
+        app:layout_constraintBottom_toTopOf="@+id/qr_image"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.25"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/qr_image"
+        android:layout_width="219dp"
+        android:layout_height="191dp"
+        android:layout_marginBottom="8dp"
+        android:src="@drawable/logo_no_shadow_8k"
+        app:layout_constraintBottom_toTopOf="@+id/qr_image_shadow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.515"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/qr_image_shadow"
+        android:layout_width="293dp"
+        android:layout_height="53dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:alpha="0.5"
+        android:src="@drawable/shadow"
         app:layout_constraintBottom_toTopOf="@+id/send_btn"
-        android:layout_marginTop="64dp"
-        android:layout_marginBottom="96dp"
-        />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/send_btn"
         android:layout_width="0dp"
         android:layout_height="64dp"
         android:layout_marginBottom="24dp"
-        android:text="Send Files"
-        android:textSize="18sp"
-        android:textAllCaps="false"
-        android:fontFamily="sans-serif-medium"
-        app:cornerRadius="12dp"
         android:backgroundTint="#4CAF50"
+        android:fontFamily="sans-serif-medium"
+        android:text="Send Files"
+        android:textAllCaps="false"
+        android:textSize="18sp"
+        app:cornerRadius="12dp"
         app:icon="@drawable/send"
         app:iconGravity="textStart"
         app:iconPadding="16dp"
@@ -46,23 +67,23 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/receive_btn"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:text="Receive Files"
-        android:textSize="18sp"
-        android:textAllCaps="false"
+        android:layout_marginBottom="64dp"
         android:fontFamily="sans-serif-medium"
-        app:cornerRadius="12dp"
-        app:strokeColor="#1A237E"
-        app:strokeWidth="2dp"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:text="Receive Files"
+        android:textAllCaps="false"
         android:textColor="#1A237E"
+        android:textSize="18sp"
+        app:cornerRadius="12dp"
         app:icon="@drawable/download"
         app:iconGravity="textStart"
         app:iconPadding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="64dp" />
+        app:strokeColor="#1A237E"
+        app:strokeWidth="2dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

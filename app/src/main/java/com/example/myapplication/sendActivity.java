@@ -9,24 +9,18 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
-import android.text.Layout;
 import android.util.Size;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -52,6 +46,29 @@ public class sendActivity extends AppCompatActivity {
 
         select_files_button.setOnClickListener(view -> selectFiles());
 
+        send_button.setOnClickListener(view -> {
+            if(selectedFileUris.isEmpty()){
+                Toast.makeText(getApplicationContext(), "Please select files", Toast.LENGTH_SHORT).show();
+            }
+            else{
+                sendFiles();
+            }
+        });
+    }
+
+
+    private void sendFiles() {
+        Intent intent = new Intent(sendActivity.this, qrActivity.class);
+        intent.putExtra("selectedFileUris", selectedFileUris);
+        startActivity(intent);
+    }
+
+    private void selectFiles(){
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        intent.setType("*/*");
+        startActivityForResult(Intent.createChooser(intent, "Select files"), 100);
     }
 
     @Override
@@ -85,7 +102,7 @@ public class sendActivity extends AppCompatActivity {
         }
     }
 
-    void showFiles(Uri uri){
+    private void showFiles(Uri uri){
         ContentResolver contentResolver = getContentResolver();
         DecimalFormat df = new DecimalFormat("0.00");
 
@@ -163,14 +180,5 @@ public class sendActivity extends AppCompatActivity {
             }
             cursor.close();
         }
-    }
-
-
-    void selectFiles(){
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        intent.setType("*/*");
-        startActivityForResult(Intent.createChooser(intent, "Select files"), 100);
     }
 }
