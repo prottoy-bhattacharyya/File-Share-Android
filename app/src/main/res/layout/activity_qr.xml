@@ -47,11 +47,11 @@
             android:id="@+id/qr_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerInside"
-            android:padding="16dp"
-            android:src="@drawable/logo_no_shadow_8k"
+            android:layout_gravity="center"
             android:background="#FFFFFF"
-            android:layout_gravity="center" />
+            android:padding="16dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/loading" />
 
     </androidx.cardview.widget.CardView>
 
@@ -72,7 +72,7 @@
         android:id="@+id/qrText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="ABCD-EFGH"
+        android:text="....."
         android:textColor="#212121"
         android:textSize="24sp"
         android:fontFamily="monospace"
